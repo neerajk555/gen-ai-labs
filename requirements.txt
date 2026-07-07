@@ -1,0 +1,7 @@
+# Module 2 — Generative AI Fundamentals — Hands-On Lab Requirements
+# Install with: pip install -r requirements.txt
+
+pandas>=2.0.0
+openai>=1.30
+python-dotenv>=1.0
+tiktoken>=0.7

@@ -1,0 +1,34 @@
+RADIOLOGY REPORT
+
+Patient: [REDACTED]  MRN: [REDACTED]  Date of Study: [REDACTED]
+Study: CT Chest, Abdomen and Pelvis with Contrast
+Clinical Indication: 62-year-old male with history of colorectal carcinoma, post-surgical resection, for interval surveillance imaging.
+
+TECHNIQUE:
+Contiguous axial images were obtained through the chest, abdomen, and pelvis following the administration of intravenous and oral contrast. Multiplanar reformatted images were reviewed. Comparison was made to the prior study performed six months earlier.
+
+FINDINGS:
+
+CHEST:
+The lungs are clear bilaterally without evidence of consolidation, effusion, or pneumothorax. No suspicious pulmonary nodules are identified. The airways are patent centrally. The heart size is within normal limits. There is no pericardial effusion. The great vessels are unremarkable in calibre. No mediastinal, hilar, or axillary lymphadenopathy is identified by CT size criteria. The visualized thyroid gland is unremarkable. No thoracic skeletal lesions are seen.
+
+ABDOMEN:
+The liver is normal in size and contour, with homogeneous attenuation and no focal hepatic lesion identified. The previously noted 8mm hypodensity in hepatic segment VI, first seen on the prior study, is stable in size and characteristics, most consistent with a simple hepatic cyst. The gallbladder is unremarkable without evidence of cholelithiasis or wall thickening. The pancreas is normal in size and contour without ductal dilatation. The spleen is normal in size, measuring 10.2cm in craniocaudal dimension. Both kidneys are normal in size, position, and enhancement pattern, without hydronephrosis or suspicious renal lesion. No retroperitoneal or mesenteric lymphadenopathy is identified. The bowel loops are unremarkable in calibre throughout, without evidence of obstruction, wall thickening, or free intraperitoneal air. Surgical clips are noted in the region of the prior sigmoid colectomy, with no evidence of local recurrence at the anastomotic site. No free fluid is identified within the abdomen.
+
+PELVIS:
+The urinary bladder is adequately distended and unremarkable. The prostate gland is mildly enlarged, measuring approximately 4.2 x 3.8 x 3.5cm, consistent with benign prostatic hyperplasia, unchanged from prior. No pelvic or inguinal lymphadenopathy is identified. No pelvic free fluid or soft tissue mass is seen. The visualized osseous pelvis demonstrates no aggressive lesion.
+
+BONES:
+No suspicious osseous lesion is identified within the visualized skeleton. Degenerative changes are noted at multiple levels of the visualized thoracolumbar spine, most pronounced at L4-L5, consistent with the patient's age.
+
+IMPRESSION:
+1. No evidence of local tumour recurrence at the prior sigmoid colectomy anastomotic site.
+2. No CT evidence of metastatic disease within the chest, abdomen, or pelvis at this time.
+3. Stable 8mm hepatic cyst in segment VI, unchanged from prior study, of no clinical significance.
+4. Mild benign prostatic hyperplasia, unchanged from prior.
+5. Degenerative changes of the thoracolumbar spine, unchanged, consistent with age-related findings.
+
+Recommend continued routine surveillance imaging per the patient's oncology follow-up protocol. These findings were discussed with the referring oncology team.
+
+ADDENDUM:
+Following multidisciplinary tumour board discussion, it was agreed that given the stability of findings across two consecutive surveillance studies, the interval between future surveillance scans may be extended from six months to twelve months, in line with institutional post-colorectal-cancer surveillance guidelines for patients beyond three years from resection with no evidence of recurrence. The patient's case will be reviewed again following the next scheduled study, or sooner if clinically indicated by symptoms, changes in tumour marker trends, or findings on interval colonoscopy. The referring physician has been advised to correlate these imaging findings with the most recent carcinoembryonic antigen level and colonoscopy report, as these were not available for review at the time of this reporting session. Should any new symptoms arise in the interim, including but not limited to unexplained weight loss, change in bowel habit, rectal bleeding, or new abdominal pain, expedited imaging outside of the routine surveillance schedule should be considered, and the radiology department remains available for urgent same-day protocoling of such requests in coordination with the ordering clinician.

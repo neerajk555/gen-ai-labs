@@ -1,0 +1,4 @@
+example_id,question,answer
+FS001,"What was the size of the lesion described in the findings?","The Findings section documents a lesion measuring 1.8 cm in maximum diameter."
+FS002,"Was there any evidence of metastatic disease?","The Impression section states there is no evidence of distant metastatic disease at this time."
+FS003,"Which imaging modality was used for this study?","The report header indicates this was a contrast-enhanced CT scan of the abdomen and pelvis."

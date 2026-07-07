@@ -1,0 +1,18 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+module2-env/
+venv/
+.venv/
+
+# Generated output from running the exercises
+decoding_comparison_output.csv
+model_comparison_output.csv
+
+# OS / editor noise
+.DS_Store
+.vscode/
+.idea/
