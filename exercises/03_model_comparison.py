@@ -52,7 +52,7 @@ def get_client_and_deployments():
     if missing:
         print(
             f"\n[WARNING] Azure OpenAI not fully configured — missing: {', '.join(missing)}\n"
-            "This exercise needs BOTH deployments (gpt-4o-mini and gpt-4o). "
+            "This exercise needs BOTH deployments configured (see .env.example). "
             "See README.md. Exiting.\n"
         )
         return None, None
@@ -64,9 +64,16 @@ def get_client_and_deployments():
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
     )
+    deployment_mini = os.getenv("AZURE_OPENAI_DEPLOYMENT_MINI")
+    deployment_large = os.getenv("AZURE_OPENAI_DEPLOYMENT_GPT4O")
+    # Labels use the ACTUAL deployment names you configured, not hardcoded
+    # "gpt-4o-mini"/"gpt-4o" strings — those specific models may not even be
+    # what you deployed, given how often Azure's available models have been
+    # changing. The (smaller/cheaper) and (larger/more capable) tags keep the
+    # comparison's intent clear regardless of which real models are behind them.
     deployments = {
-        "gpt-4o-mini": os.getenv("AZURE_OPENAI_DEPLOYMENT_MINI"),
-        "gpt-4o": os.getenv("AZURE_OPENAI_DEPLOYMENT_GPT4O"),
+        f"{deployment_mini} (smaller/cheaper)": deployment_mini,
+        f"{deployment_large} (larger/more capable)": deployment_large,
     }
     return client, deployments
 
