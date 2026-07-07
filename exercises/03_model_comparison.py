@@ -2,11 +2,19 @@
 Exercise 3 — Model Comparison for Enterprise Decision Making
 Module 2: Generative AI Fundamentals (Revision)
 
-Goal: Send identical prompts to two Azure OpenAI deployments (gpt-4o-mini and
-gpt-4o) and compare output quality, tone, latency, and token cost to build an
-evidence-based model-tier recommendation.
+Goal: Send identical prompts to two Azure OpenAI deployments (whatever your
+"smaller/cheaper" and "larger/more capable" tiers currently are — model names
+have been changing rapidly on Azure through 2026, see README.md for current
+guidance) and compare output quality, tone, latency, and token cost to build
+an evidence-based model-tier recommendation.
 
 Run from the project root: python exercises/03_model_comparison.py
+
+IMPLEMENTATION NOTE: this script tries each call with temperature=0.3 first,
+and automatically retries without temperature if the deployment rejects it
+(reasoning models like the gpt-5 family don't support temperature at all).
+This exercise isn't fundamentally about temperature, so dropping it for
+reasoning-model deployments doesn't change what the exercise teaches.
 
 Full concept explanation, line-by-line walkthrough, expected output, and homework
 are in 03_Model_Comparison.md
@@ -64,12 +72,17 @@ def get_client_and_deployments():
 
 
 def call_model(client, deployment_name, complaint_text):
+    messages = [{"role": "user", "content": PROMPT_TEMPLATE.format(complaint=complaint_text)}]
     start = time.time()
-    response = client.chat.completions.create(
-        model=deployment_name,
-        messages=[{"role": "user", "content": PROMPT_TEMPLATE.format(complaint=complaint_text)}],
-        temperature=0.3,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=deployment_name, messages=messages, temperature=0.3,
+        )
+    except Exception as e:
+        if "temperature" not in str(e).lower():
+            raise
+        # This deployment is a reasoning model that doesn't accept temperature — retry without it.
+        response = client.chat.completions.create(model=deployment_name, messages=messages)
     latency_seconds = round(time.time() - start, 2)
 
     return {

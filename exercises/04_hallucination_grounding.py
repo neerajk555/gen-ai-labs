@@ -9,6 +9,10 @@ citation requirement — and compare ungrounded vs grounded answers side by side
 
 Run from the project root: python exercises/04_hallucination_grounding.py
 
+IMPLEMENTATION NOTE: the call() helper below tries temperature=0 first and
+automatically retries without it if the deployment is a reasoning model that
+rejects the parameter — see README.md for current Azure model guidance.
+
 Full concept explanation, line-by-line walkthrough, expected output, and homework
 are in 04_Hallucination_Grounding.md
 """
@@ -67,14 +71,21 @@ def get_client_and_deployment():
 
 
 def call(client, deployment, system_prompt, user_prompt):
-    response = client.chat.completions.create(
-        model=deployment,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0,
-    )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+    try:
+        response = client.chat.completions.create(
+            model=deployment, messages=messages, temperature=0,
+        )
+    except Exception as e:
+        if "temperature" not in str(e).lower():
+            raise
+        # Reasoning models (gpt-5 family) don't accept temperature at all — retry without it.
+        # They're inherently more deterministic by design, so this doesn't undermine the
+        # grounding comparison this exercise is built around.
+        response = client.chat.completions.create(model=deployment, messages=messages)
     return response.choices[0].message.content
 
 
