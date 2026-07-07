@@ -10,22 +10,28 @@ Run from the project root: python exercises/01_decoding_parameters.py
 
 IMPLEMENTATION NOTE (added mid-2026): Azure has been rapidly retiring
 non-reasoning "Standard" tier models (gpt-4o, gpt-4o-mini, gpt-4.1,
-gpt-4.1-mini) in favour of the reasoning-model family (gpt-5, gpt-5-mini,
-gpt-5.1, etc). Reasoning models do NOT support the `temperature` parameter
-at all — they use `reasoning_effort` (low/medium/high) instead, which
-controls how much internal reasoning the model does before answering,
-rather than how "creative" its sampling is.
+gpt-4.1-mini) in favour of the reasoning-model family (gpt-5 series,
+gpt-chat-latest, etc). Reasoning models do NOT support the `temperature`
+parameter at all — they use `reasoning_effort` instead, which controls how
+much internal reasoning the model does before answering, rather than how
+"creative" its sampling is.
 
-This script auto-detects which kind of model your deployment actually is,
-by making one small test call, and runs the appropriate version of the
-exercise:
-  - Non-reasoning model available -> original temperature sweep (0.0/0.5/1.0)
-  - Reasoning model only          -> reasoning_effort sweep (low/medium/high)
+This script auto-detects, by making small test calls, both:
+  1. Whether your deployment supports `temperature` at all
+  2. If not, exactly WHICH `reasoning_effort` levels it supports — this
+     varies by model. Some support the full low/medium/high range; others
+     (observed in practice, e.g. some `gpt-chat-latest` deployments) only
+     support a single fixed level such as 'medium' and reject the rest with
+     a 400 error. The script probes each candidate individually and only
+     uses the ones that actually work, rather than assuming.
 
 Either way, the pedagogical point is the same: this one parameter trades
 consistency/determinism for something else (creativity, for temperature;
 depth of internal reasoning, for reasoning_effort) — and clinical use cases
 generally want the "low variation" end of whichever knob your model has.
+If your deployment only supports a single reasoning_effort level, the
+exercise still runs — it just demonstrates the concept with one setting
+instead of a full sweep, and says so explicitly.
 
 Full concept explanation, line-by-line walkthrough, expected output, and homework
 are in 01_Decoding_Parameters.md
@@ -44,7 +50,7 @@ Patient history:
 """
 
 TEMPERATURES_TO_TEST = [0.0, 0.5, 1.0]
-REASONING_EFFORTS_TO_TEST = ["low", "medium", "high"]
+REASONING_EFFORT_CANDIDATES = ["low", "medium", "high"]
 
 
 def load_data(path="data/patient_histories.csv"):
@@ -74,23 +80,53 @@ def get_client_and_deployment():
     return client, deployment
 
 
-def detect_temperature_support(client, deployment):
-    """Makes one small test call to find out whether this deployment accepts
-    `temperature`. Reasoning models (gpt-5 family and similar) reject it with
-    a 400 error mentioning 'temperature' in the message — we use that as the
-    signal. Any other kind of error (auth, wrong deployment name, etc.) is
-    re-raised so it surfaces clearly rather than being silently swallowed."""
+def _probe_call(client, deployment, temperature=None, reasoning_effort=None):
+    """Fires one minimal test call and returns (True, None) on success or
+    (False, error_message) on failure — never raises for expected
+    unsupported-parameter errors, so callers can probe safely."""
+    kwargs = {}
+    if temperature is not None:
+        kwargs["temperature"] = temperature
+    if reasoning_effort is not None:
+        kwargs["extra_body"] = {"reasoning_effort": reasoning_effort}
     try:
         client.chat.completions.create(
             model=deployment,
             messages=[{"role": "user", "content": "Reply with just the word OK."}],
-            temperature=0.5,
+            **kwargs,
         )
-        return True
+        return True, None
     except Exception as e:
-        if "temperature" in str(e).lower():
-            return False
-        raise
+        return False, str(e)
+
+
+def detect_temperature_support(client, deployment):
+    """Returns True if this deployment accepts `temperature`, False if it's
+    a reasoning model that rejects it. Any error NOT about temperature
+    (auth failure, wrong deployment name, etc.) is re-raised immediately so
+    it surfaces clearly instead of being silently swallowed."""
+    ok, error_message = _probe_call(client, deployment, temperature=0.5)
+    if ok:
+        return True
+    if error_message and "temperature" in error_message.lower():
+        return False
+    raise RuntimeError(f"Unexpected error while probing deployment '{deployment}':\n{error_message}")
+
+
+def detect_supported_reasoning_efforts(client, deployment, candidates=REASONING_EFFORT_CANDIDATES):
+    """Probes each candidate reasoning_effort level individually and returns
+    only the ones this specific deployment actually accepts. Different
+    reasoning models support different subsets — some support the full
+    low/medium/high range, others only a single fixed level."""
+    supported = []
+    for effort in candidates:
+        ok, error_message = _probe_call(client, deployment, reasoning_effort=effort)
+        if ok:
+            supported.append(effort)
+        elif error_message and "reasoning_effort" not in error_message.lower():
+            # Some other, unrelated failure — surface it rather than hiding it.
+            raise RuntimeError(f"Unexpected error while probing deployment '{deployment}':\n{error_message}")
+    return supported
 
 
 def summarise(client, deployment, history_text, temperature=None, reasoning_effort=None):
@@ -98,8 +134,6 @@ def summarise(client, deployment, history_text, temperature=None, reasoning_effo
     if temperature is not None:
         kwargs["temperature"] = temperature
     if reasoning_effort is not None:
-        # Passed via extra_body so this works regardless of installed openai
-        # SDK version's typed support for the reasoning_effort parameter.
         kwargs["extra_body"] = {"reasoning_effort": reasoning_effort}
 
     response = client.chat.completions.create(
@@ -110,21 +144,20 @@ def summarise(client, deployment, history_text, temperature=None, reasoning_effo
     return response.choices[0].message.content
 
 
-def demo_single_patient(client, deployment, df, use_temperature):
+def demo_single_patient(client, deployment, df, use_temperature, settings):
     sample_history = df.loc[0, "history_text"]
-    settings = TEMPERATURES_TO_TEST if use_temperature else REASONING_EFFORTS_TO_TEST
     label = "TEMPERATURE" if use_temperature else "REASONING_EFFORT"
 
     for setting in settings:
+        display_value = setting if setting is not None else "default (fixed by model)"
         if use_temperature:
             summary = summarise(client, deployment, sample_history, temperature=setting)
         else:
             summary = summarise(client, deployment, sample_history, reasoning_effort=setting)
-        print(f"\n{'=' * 80}\n{label} = {setting}\n{'=' * 80}\n{summary}")
+        print(f"\n{'=' * 80}\n{label} = {display_value}\n{'=' * 80}\n{summary}")
 
 
-def build_full_comparison_table(client, deployment, df, use_temperature, output_path="decoding_comparison_output.csv"):
-    settings = TEMPERATURES_TO_TEST if use_temperature else REASONING_EFFORTS_TO_TEST
+def build_full_comparison_table(client, deployment, df, use_temperature, settings, output_path="decoding_comparison_output.csv"):
     setting_column = "temperature" if use_temperature else "reasoning_effort"
 
     comparison_rows = []
@@ -135,7 +168,7 @@ def build_full_comparison_table(client, deployment, df, use_temperature, output_
             else:
                 summary = summarise(client, deployment, row["history_text"], reasoning_effort=setting)
             comparison_rows.append(
-                {"patient_id": row["patient_id"], setting_column: setting, "summary": summary}
+                {"patient_id": row["patient_id"], setting_column: setting if setting is not None else "default", "summary": summary}
             )
 
     comparison_df = pd.DataFrame(comparison_rows)
@@ -153,25 +186,39 @@ def main():
 
     print("\nDetecting whether this deployment supports `temperature`...")
     use_temperature = detect_temperature_support(client, deployment)
+
     if use_temperature:
         print("-> This is a non-reasoning model. Running the TEMPERATURE sweep (0.0 / 0.5 / 1.0).")
+        settings = TEMPERATURES_TO_TEST
     else:
-        print(
-            "-> `temperature` is not supported on this deployment — it's a reasoning model.\n"
-            "   Running the REASONING_EFFORT sweep instead (low / medium / high).\n"
-            "   Same underlying lesson: this parameter trades consistency for something else —\n"
-            "   creativity for temperature, depth of internal reasoning for reasoning_effort."
-        )
+        print("-> `temperature` is not supported — it's a reasoning model. Checking which reasoning_effort levels it accepts...")
+        settings = detect_supported_reasoning_efforts(client, deployment)
+
+        if len(settings) >= 2:
+            print(f"-> Supported reasoning_effort levels: {settings}. Running the sweep across all of them.")
+        elif len(settings) == 1:
+            print(
+                f"-> This deployment only supports a single reasoning_effort level ({settings[0]!r}) — "
+                "the rest were rejected. Running the exercise with just that one setting; "
+                "you won't see variation across levels, but you'll still see how a reasoning "
+                "model's output compares to what temperature-based sampling would have produced."
+            )
+        else:
+            print(
+                "-> No reasoning_effort level could be set on this deployment — it only runs at its "
+                "fixed default. Running the exercise with no reasoning_effort parameter at all."
+            )
+            settings = [None]
 
     print("\n" + "=" * 80)
     print("STAGE 1: Single-patient demo")
     print("=" * 80)
-    demo_single_patient(client, deployment, df, use_temperature)
+    demo_single_patient(client, deployment, df, use_temperature, settings)
 
     print("\n" + "=" * 80)
-    print("STAGE 2: Full comparison table across all patients (12 API calls)")
+    print(f"STAGE 2: Full comparison table across all patients ({len(df) * len(settings)} API calls)")
     print("=" * 80)
-    build_full_comparison_table(client, deployment, df, use_temperature)
+    build_full_comparison_table(client, deployment, df, use_temperature, settings)
 
 
 if __name__ == "__main__":
